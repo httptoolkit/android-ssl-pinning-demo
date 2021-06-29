@@ -8,9 +8,8 @@ import android.widget.Toast
 import androidx.annotation.IdRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import com.android.volley.toolbox.HurlStack
-import com.android.volley.toolbox.StringRequest
-import com.android.volley.toolbox.Volley
+import com.android.volley.RequestQueue
+import com.android.volley.toolbox.*
 import kotlinx.coroutines.*
 import okhttp3.CertificatePinner
 import okhttp3.OkHttpClient
@@ -163,9 +162,11 @@ class MainActivity : AppCompatActivity() {
             val context = SSLContext.getInstance("TLS")
             context.init(null, trustManagerFactory.trustManagers, null)
 
-            val requestQueue = Volley.newRequestQueue(this@MainActivity,
-                HurlStack(null, context.socketFactory)
+            val requestQueue = RequestQueue(
+                NoCache(),
+                BasicNetwork(HurlStack(null, context.socketFactory))
             )
+            requestQueue.start()
 
             // Make a request using that client:
             val stringRequest = StringRequest(
