@@ -24,16 +24,25 @@
             android:text="Unpinned request" />
 
         <Button
-            android:id="@+id/code_pinned"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Code-pinned request" />
-
-        <Button
             android:id="@+id/config_pinned"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:onClick="sendConfigPinned"
             android:text="Config-pinned request" />
+
+        <Button
+            android:id="@+id/okhttp_pinned"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="sendOkHttpPinned"
+            android:text="OkHTTP pinned request" />
+
+        <Button
+            android:id="@+id/volley_pinned"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="sendVolleyPinned"
+            android:text="Volley pinned request" />
 
     </LinearLayout>
 
