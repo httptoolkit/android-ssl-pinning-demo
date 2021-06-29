@@ -17,19 +17,20 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <Button
-            android:id="@+id/button"
+            android:id="@+id/unpinned"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:onClick="sendUnpinned"
             android:text="Unpinned request" />
 
         <Button
-            android:id="@+id/button2"
+            android:id="@+id/code_pinned"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Code-pinned request" />
 
         <Button
-            android:id="@+id/button3"
+            android:id="@+id/config_pinned"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Config-pinned request" />
