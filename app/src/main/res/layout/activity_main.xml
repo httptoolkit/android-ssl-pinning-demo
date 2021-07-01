@@ -44,6 +44,13 @@
             android:onClick="sendVolleyPinned"
             android:text="Volley pinned request" />
 
+        <Button
+            android:id="@+id/trustkit_pinned"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="sendTrustKitPinned"
+            android:text="TrustKit pinned request" />
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

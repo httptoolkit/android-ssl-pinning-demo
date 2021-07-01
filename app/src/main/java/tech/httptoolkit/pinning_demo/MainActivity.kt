@@ -10,15 +10,16 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.*
+import com.datatheorem.android.trustkit.TrustKit
 import kotlinx.coroutines.*
 import okhttp3.CertificatePinner
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.BufferedInputStream
-import java.net.HttpURLConnection
 import java.net.URL
 import java.security.KeyStore
 import java.security.cert.CertificateFactory
+import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
 
@@ -27,6 +28,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        TrustKit.initializeWithNetworkSecurityConfiguration(this@MainActivity)
     }
 
     private fun onStart(@IdRes id: Int) {
@@ -78,7 +81,7 @@ class MainActivity : AppCompatActivity() {
             onStart(R.id.unpinned)
             try {
                 val mURL = URL("https://badssl.com")
-                with(mURL.openConnection() as HttpURLConnection) {
+                with(mURL.openConnection() as HttpsURLConnection) {
                     println("URL: ${this.url}")
                     println("Response Code: ${this.responseCode}")
                 }
@@ -97,7 +100,7 @@ class MainActivity : AppCompatActivity() {
             try {
                 // Untrusted in system store, trusted & pinned in network config:
                 val mURL = URL("https://untrusted-root.badssl.com")
-                with(mURL.openConnection() as HttpURLConnection) {
+                with(mURL.openConnection() as HttpsURLConnection) {
                     println("URL: ${this.url}")
                     println("Response Code: ${this.responseCode}")
                 }
@@ -186,6 +189,27 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Throwable) {
             println(e)
             onError(R.id.volley_pinned, e.toString())
+        }
+    }
+
+    fun sendTrustKitPinned(view: View) {
+        GlobalScope.launch(Dispatchers.IO) {
+            onStart(R.id.trustkit_pinned)
+            try {
+                val mURL = URL("https://untrusted-root.badssl.com")
+                with(mURL.openConnection() as HttpsURLConnection) {
+                    this.sslSocketFactory = TrustKit.getInstance().getSSLSocketFactory(
+                            "untrusted-root.badssl.com"
+                    )
+                    println("URL: ${this.url}")
+                    println("Response Code: ${this.responseCode}")
+                }
+
+                onSuccess(R.id.trustkit_pinned)
+            } catch (e: Throwable) {
+                println(e)
+                onError(R.id.trustkit_pinned, e.toString())
+            }
         }
     }
 }
