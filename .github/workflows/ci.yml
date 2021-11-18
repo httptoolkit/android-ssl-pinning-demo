@@ -20,7 +20,7 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: app.apk
+          name: app
           path: app/build/outputs/apk/release/app-release-unsigned.apk
           if-no-files-found: error
 
@@ -34,16 +34,13 @@ jobs:
         id: get_apk
         uses: actions/download-artifact@v2
         with:
-          name: app.apk
-
-      - name: Ls
-        run: ls -la
+          name: app
 
       - name: Publish the APK to GitHub Releases
         uses: svenstaro/upload-release-action@v2
         with:
           prerelease: true
           asset_name: pinning-demo.apk
-          file: ${{ steps.get_apk.outputs.download-path }}
+          file: ${{ steps.get_apk.outputs.download-path }}/app-release-unsigned.apk
           tag: ${{ github.ref }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
