@@ -15,14 +15,20 @@ import kotlinx.coroutines.*
 import okhttp3.CertificatePinner
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okio.ByteString.Companion.decodeBase64
+import okio.ByteString.Companion.toByteString
 import java.io.BufferedInputStream
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.io.PrintWriter
 import java.net.URL
 import java.security.KeyStore
+import java.security.cert.Certificate
 import java.security.cert.CertificateFactory
-import javax.net.ssl.HttpsURLConnection
-import javax.net.ssl.SSLContext
-import javax.net.ssl.TrustManagerFactory
+import java.security.cert.X509Certificate
+import javax.net.ssl.*
 
+const val BADSSL_UNTRUSTED_ROOT_SHA256 = "sr2tjak7H6QRi8o0fyIXGWdPiU32rDsczcIEAqA+s4g="
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -120,15 +126,14 @@ class MainActivity : AppCompatActivity() {
             try {
                 val hostname = "badssl.com"
                 val certificatePinner = CertificatePinner.Builder()
-                    // DigiCert SHA2 Secure Server CA (valid until March 2023)
-                    .add(hostname, "sha256/5kJvNEMw0KjrCAu7eXY5HZdvyCS13BbA0VJG1RSP91w=")
+                    .add(hostname, "sha256/${BADSSL_UNTRUSTED_ROOT_SHA256}")
                     .build()
 
                 val client = OkHttpClient.Builder()
                     .certificatePinner(certificatePinner)
                     .build()
                 val request = Request.Builder()
-                    .url("https://badssl.com")
+                    .url("https://untrusted-root.badssl.com")
                     .build();
 
                 client.newCall(request).execute().use { response ->
@@ -211,5 +216,57 @@ class MainActivity : AppCompatActivity() {
                 onError(R.id.trustkit_pinned, e.toString())
             }
         }
+    }
+
+    fun sendManuallyCustomPinned(view: View) {
+        GlobalScope.launch(Dispatchers.IO) {
+            onStart(R.id.manually_pinned)
+            try {
+                // Disable trust manager checks - we'll check the certificate manually ourselves later
+                val trustManager = arrayOf<TrustManager>(object : X509TrustManager {
+                    override fun getAcceptedIssuers(): Array<X509Certificate?>? {
+                        return null
+                    }
+
+                    override fun checkClientTrusted(certs: Array<X509Certificate?>?, authType: String?) {}
+                    override fun checkServerTrusted(certs: Array<X509Certificate?>?, authType: String?) {}
+                })
+
+                val context = SSLContext.getInstance("TLS")
+                context.init(null, trustManager, null)
+
+                val socket = context.socketFactory.createSocket("untrusted-root.badssl.com", 443) as SSLSocket
+
+                val certs = socket.session.peerCertificates
+
+                if (!certs.any { cert -> doesCertMatchPin(BADSSL_UNTRUSTED_ROOT_SHA256, cert) }) {
+                    socket.close() // Close the socket immediately without sending a request
+                    throw Error("Unrecognized cert hash.")
+                }
+
+                // Send a real request, just to make it clear that we trust the connection:
+                val pw = PrintWriter(socket.outputStream)
+                pw.println("GET / HTTP/1.1")
+                pw.println("Host: untrusted-root.badssl.com")
+                pw.println("")
+                pw.flush()
+
+                val br = BufferedReader(InputStreamReader(socket.inputStream))
+                val responseLine = br.readLine()
+
+                println("Response was: $responseLine")
+                socket.close()
+
+                onSuccess(R.id.manually_pinned)
+            } catch (e: Throwable) {
+                println(e)
+                onError(R.id.manually_pinned, e.toString())
+            }
+        }
+    }
+
+    private fun doesCertMatchPin(pin: String, cert: Certificate): Boolean {
+        val certHash = cert.publicKey.encoded.toByteString().sha256()
+        return certHash == pin.decodeBase64()
     }
 }

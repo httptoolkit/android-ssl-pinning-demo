@@ -51,6 +51,13 @@
             android:onClick="sendTrustKitPinned"
             android:text="TrustKit pinned request" />
 
+        <Button
+            android:id="@+id/manually_pinned"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="sendManuallyCustomPinned"
+            android:text="Manually pinned request" />
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
