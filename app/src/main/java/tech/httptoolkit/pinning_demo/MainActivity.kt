@@ -28,7 +28,7 @@ import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import javax.net.ssl.*
 
-const val DIGICERT_ROOT_SHA256 = "5kJvNEMw0KjrCAu7eXY5HZdvyCS13BbA0VJG1RSP91w="
+const val LETS_ENCRYPT_ROOT_SHA256 = "NgJeUutmfGsIONh0XaovCA5VJ05uv2gCb27pUOpTPxU="
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -105,7 +105,7 @@ class MainActivity : AppCompatActivity() {
             onStart(R.id.config_pinned)
             try {
                 // Pinned by hash in network config:
-                val mURL = URL("https://sha512.badssl.com")
+                val mURL = URL("https://sha256.badssl.com")
                 with(mURL.openConnection() as HttpsURLConnection) {
                     println("URL: ${this.url}")
                     println("Response Code: ${this.responseCode}")
@@ -124,16 +124,16 @@ class MainActivity : AppCompatActivity() {
             onStart(R.id.okhttp_pinned)
 
             try {
-                val hostname = "sha512.badssl.com"
+                val hostname = "sha256.badssl.com"
                 val certificatePinner = CertificatePinner.Builder()
-                    .add(hostname, "sha256/${DIGICERT_ROOT_SHA256}")
+                    .add(hostname, "sha256/${LETS_ENCRYPT_ROOT_SHA256}")
                     .build()
 
                 val client = OkHttpClient.Builder()
                     .certificatePinner(certificatePinner)
                     .build()
                 val request = Request.Builder()
-                    .url("https://sha512.badssl.com")
+                    .url("https://sha256.badssl.com")
                     .build();
 
                 client.newCall(request).execute().use { response ->
@@ -155,7 +155,7 @@ class MainActivity : AppCompatActivity() {
         try {
             // Create an HTTP client that only trusts our specific certificate:
             val cf = CertificateFactory.getInstance("X.509")
-            val caStream = BufferedInputStream(resources.openRawResource(R.raw.digicert_ca))
+            val caStream = BufferedInputStream(resources.openRawResource(R.raw.lets_encrypt_isrg_root))
             val ca = cf.generateCertificate(caStream)
             caStream.close()
 
@@ -179,7 +179,7 @@ class MainActivity : AppCompatActivity() {
             // Make a request using that client:
             val stringRequest = StringRequest(
                 com.android.volley.Request.Method.GET,
-                "https://sha512.badssl.com",
+                "https://sha256.badssl.com",
                 { _ ->
                     println("Volley success")
                     this@MainActivity.onSuccess(R.id.volley_pinned)
@@ -201,10 +201,10 @@ class MainActivity : AppCompatActivity() {
         GlobalScope.launch(Dispatchers.IO) {
             onStart(R.id.trustkit_pinned)
             try {
-                val mURL = URL("https://sha512.badssl.com")
+                val mURL = URL("https://sha256.badssl.com")
                 with(mURL.openConnection() as HttpsURLConnection) {
                     this.sslSocketFactory = TrustKit.getInstance().getSSLSocketFactory(
-                            "sha512.badssl.com"
+                            "sha256.badssl.com"
                     )
                     println("URL: ${this.url}")
                     println("Response Code: ${this.responseCode}")
@@ -235,11 +235,11 @@ class MainActivity : AppCompatActivity() {
                 val context = SSLContext.getInstance("TLS")
                 context.init(null, trustManager, null)
 
-                val socket = context.socketFactory.createSocket("sha512.badssl.com", 443) as SSLSocket
+                val socket = context.socketFactory.createSocket("sha256.badssl.com", 443) as SSLSocket
 
                 val certs = socket.session.peerCertificates
 
-                if (!certs.any { cert -> doesCertMatchPin(DIGICERT_ROOT_SHA256, cert) }) {
+                if (!certs.any { cert -> doesCertMatchPin(LETS_ENCRYPT_ROOT_SHA256, cert) }) {
                     socket.close() // Close the socket immediately without sending a request
                     throw Error("Unrecognized cert hash.")
                 }
@@ -247,7 +247,7 @@ class MainActivity : AppCompatActivity() {
                 // Send a real request, just to make it clear that we trust the connection:
                 val pw = PrintWriter(socket.outputStream)
                 pw.println("GET / HTTP/1.1")
-                pw.println("Host: sha512.badssl.com")
+                pw.println("Host: sha256.badssl.com")
                 pw.println("")
                 pw.flush()
 
