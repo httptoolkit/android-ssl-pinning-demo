@@ -86,7 +86,7 @@ class MainActivity : AppCompatActivity() {
         GlobalScope.launch(Dispatchers.IO) {
             onStart(R.id.unpinned)
             try {
-                val mURL = URL("https://example.com")
+                val mURL = URL("https://httptoolkit.tech")
                 with(mURL.openConnection() as HttpsURLConnection) {
                     println("URL: ${this.url}")
                     println("Response Code: ${this.responseCode}")
