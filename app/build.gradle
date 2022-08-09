@@ -3,6 +3,9 @@ plugins {
     id 'kotlin-android'
 }
 
+def keyStorePassword = System.getenv('KEYSTORE_PASSWORD')
+def keyAvailable = !!keyStorePassword
+
 android {
     compileSdkVersion 30
     buildToolsVersion "30.0.2"
@@ -17,9 +20,23 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        release {
+            storeFile file("./keystore.jks")
+            storePassword keyStorePassword
+            keyAlias "signing_key"
+            keyPassword keyStorePassword
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
+            if (keyAvailable) {
+                signingConfig signingConfigs.release
+            } else {
+                logger.warn('No signing key available')
+            }
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
