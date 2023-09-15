@@ -7,13 +7,13 @@ def keyStorePassword = System.getenv('KEYSTORE_PASSWORD')
 def keyAvailable = !!keyStorePassword
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 33
     buildToolsVersion "30.0.2"
 
     defaultConfig {
         applicationId "tech.httptoolkit.pinning_demo"
         minSdkVersion 24
-        targetSdkVersion 30
+        targetSdkVersion 33
         versionCode 5
         versionName "1.3.0"
 
