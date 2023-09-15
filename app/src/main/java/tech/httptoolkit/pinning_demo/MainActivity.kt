@@ -28,7 +28,7 @@ import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import javax.net.ssl.*
 
-const val LETS_ENCRYPT_ROOT_SHA256 = "NgJeUutmfGsIONh0XaovCA5VJ05uv2gCb27pUOpTPxU="
+const val LETS_ENCRYPT_ROOT_SHA256 = "C5+lpZ7tcVwmwQIMcRtPbsQtWLABXhQzejna0wHFr8M="
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -86,7 +86,7 @@ class MainActivity : AppCompatActivity() {
         GlobalScope.launch(Dispatchers.IO) {
             onStart(R.id.unpinned)
             try {
-                val mURL = URL("https://httptoolkit.tech")
+                val mURL = URL("https://httptoolkit.com")
                 with(mURL.openConnection() as HttpsURLConnection) {
                     println("URL: ${this.url}")
                     println("Response Code: ${this.responseCode}")

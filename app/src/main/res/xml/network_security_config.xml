@@ -3,7 +3,7 @@
     <domain-config>
         <domain includeSubdomains="false">sha256.badssl.com</domain>
         <pin-set>
-            <pin digest="SHA-256">NgJeUutmfGsIONh0XaovCA5VJ05uv2gCb27pUOpTPxU=</pin>
+            <pin digest="SHA-256">C5+lpZ7tcVwmwQIMcRtPbsQtWLABXhQzejna0wHFr8M=</pin>
         </pin-set>
         <trust-anchors>
             <certificates src="@raw/lets_encrypt_isrg_root" />
