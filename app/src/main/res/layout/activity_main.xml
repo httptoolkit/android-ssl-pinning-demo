@@ -52,11 +52,18 @@
             android:text="TrustKit pinned request" />
 
         <Button
-            android:id="@+id/manually_pinned"
+            android:id="@+id/custom_context_pinned"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:onClick="sendManuallyCustomPinned"
-            android:text="Manually pinned request" />
+            android:onClick="sendCustomContextPinned"
+            android:text="Custom context-pinned request" />
+
+        <Button
+            android:id="@+id/custom_raw_socket_pinned"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="sendCustomRawSocketPinned"
+            android:text="Custom manually pinned request" />
 
     </LinearLayout>
 

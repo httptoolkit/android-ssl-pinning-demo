@@ -9,9 +9,14 @@ import androidx.annotation.IdRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.android.volley.RequestQueue
-import com.android.volley.toolbox.*
+import com.android.volley.toolbox.BasicNetwork
+import com.android.volley.toolbox.HurlStack
+import com.android.volley.toolbox.NoCache
+import com.android.volley.toolbox.StringRequest
 import com.datatheorem.android.trustkit.TrustKit
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import okhttp3.CertificatePinner
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -218,9 +223,50 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun sendManuallyCustomPinned(view: View) {
+    // Manually pinned by building an SSLContext that trusts only the correct certificate, and then
+    // connecting with the native HttpsUrlConnection API:
+    fun sendCustomContextPinned(view: View) {
         GlobalScope.launch(Dispatchers.IO) {
-            onStart(R.id.manually_pinned)
+            onStart(R.id.custom_context_pinned)
+
+            val cf = CertificateFactory.getInstance("X.509")
+            val caStream = BufferedInputStream(resources.openRawResource(R.raw.lets_encrypt_isrg_root))
+            val caCertificate = cf.generateCertificate(caStream)
+
+            val keyStore = KeyStore.getInstance(KeyStore.getDefaultType())
+            keyStore.load(null)
+            keyStore.setCertificateEntry("ca", caCertificate)
+
+            val trustManagerFactory = TrustManagerFactory
+                .getInstance(TrustManagerFactory.getDefaultAlgorithm())
+            trustManagerFactory.init(keyStore)
+
+            try {
+                val context = SSLContext.getInstance("TLS")
+                context.init(null, trustManagerFactory.trustManagers, null)
+
+                val mURL = URL("https://sha256.badssl.com")
+                with(mURL.openConnection() as HttpsURLConnection) {
+                    this.sslSocketFactory = context.socketFactory
+
+                    println("URL: ${this.url}")
+                    println("Response Code: ${this.responseCode}")
+                }
+
+                onSuccess(R.id.custom_context_pinned)
+            } catch (e: Throwable) {
+                println(e)
+                onError(R.id.custom_context_pinned, e.toString())
+            }
+        }
+    }
+
+    // Manually pinned at the lowest level: creating a raw TLS connection, disabling all checks,
+    // and then directly analysing the certificate that's received after connection, before doing
+    // HTTP by just writing & reading raw strings. Not a good idea, but the hardest to unpin!
+    fun sendCustomRawSocketPinned(view: View) {
+        GlobalScope.launch(Dispatchers.IO) {
+            onStart(R.id.custom_raw_socket_pinned)
             try {
                 // Disable trust manager checks - we'll check the certificate manually ourselves later
                 val trustManager = arrayOf<TrustManager>(object : X509TrustManager {
@@ -257,10 +303,10 @@ class MainActivity : AppCompatActivity() {
                 println("Response was: $responseLine")
                 socket.close()
 
-                onSuccess(R.id.manually_pinned)
+                onSuccess(R.id.custom_raw_socket_pinned)
             } catch (e: Throwable) {
                 println(e)
-                onError(R.id.manually_pinned, e.toString())
+                onError(R.id.custom_raw_socket_pinned, e.toString())
             }
         }
     }
