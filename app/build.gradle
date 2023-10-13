@@ -8,7 +8,6 @@ def keyAvailable = !!keyStorePassword
 
 android {
     compileSdkVersion 33
-    buildToolsVersion "30.0.2"
 
     defaultConfig {
         applicationId "tech.httptoolkit.pinning_demo"
@@ -47,6 +46,7 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+    namespace 'tech.httptoolkit.pinning_demo'
 }
 
 dependencies {
