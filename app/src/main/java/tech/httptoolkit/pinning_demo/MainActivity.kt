@@ -113,6 +113,8 @@ class MainActivity : AppCompatActivity() {
         onStart(R.id.webview_unpinned)
         val webView = WebView(this@MainActivity)
 
+        var connectionFailed = false
+
         webView.loadUrl("https://sha256.badssl.com")
         webView.webViewClient = object : WebViewClient() {
             override fun onReceivedSslError(
@@ -121,9 +123,13 @@ class MainActivity : AppCompatActivity() {
                 error: SslError?
             ) {
                 onError(R.id.webview_unpinned, error.toString())
+                connectionFailed = true
+                handler?.cancel()
             }
 
             override fun onPageFinished(view: WebView?, url: String?) {
+                if (connectionFailed) return
+
                 println("Unpinned WebView loaded OK")
                 onSuccess(R.id.webview_unpinned)
             }
