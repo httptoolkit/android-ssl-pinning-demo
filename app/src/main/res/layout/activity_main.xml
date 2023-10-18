@@ -24,6 +24,13 @@
             android:text="Unpinned request" />
 
         <Button
+            android:id="@+id/webview_unpinned"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="sendUnpinnedWebView"
+            android:text="Unpinned WebView request" />
+
+        <Button
             android:id="@+id/config_pinned"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

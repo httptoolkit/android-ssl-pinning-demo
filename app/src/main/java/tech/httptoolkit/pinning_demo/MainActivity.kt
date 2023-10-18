@@ -1,8 +1,12 @@
 package tech.httptoolkit.pinning_demo
 
 import android.graphics.drawable.Drawable
+import android.net.http.SslError
 import android.os.Bundle
 import android.view.View
+import android.webkit.SslErrorHandler
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import android.widget.Button
 import android.widget.Toast
 import androidx.annotation.IdRes
@@ -105,6 +109,27 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    fun sendUnpinnedWebView(view: View) {
+        onStart(R.id.webview_unpinned)
+        val webView = WebView(this@MainActivity)
+
+        webView.loadUrl("https://sha256.badssl.com")
+        webView.webViewClient = object : WebViewClient() {
+            override fun onReceivedSslError(
+                view: WebView?,
+                handler: SslErrorHandler?,
+                error: SslError?
+            ) {
+                onError(R.id.webview_unpinned, error.toString())
+            }
+
+            override fun onPageFinished(view: WebView?, url: String?) {
+                println("Unpinned WebView loaded OK")
+                onSuccess(R.id.webview_unpinned)
+            }
+        }
+    }
+
     fun sendConfigPinned(view: View) {
         GlobalScope.launch(Dispatchers.IO) {
             onStart(R.id.config_pinned)
@@ -139,7 +164,7 @@ class MainActivity : AppCompatActivity() {
                     .build()
                 val request = Request.Builder()
                     .url("https://sha256.badssl.com")
-                    .build();
+                    .build()
 
                 client.newCall(request).execute().use { response ->
                     println("URL: ${request.url}")
