@@ -1,7 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
+
+    <!-- We use amiusing.httptoolkit.tech for unpinned requests -->
+
+    <!-- We use ecc384.badssl.com for manual pinning, defined in code -->
+
+    <!-- We use sha256.badssl.com for normal config-defined pinning: -->
     <domain-config>
         <domain includeSubdomains="false">sha256.badssl.com</domain>
+        <pin-set>
+            <pin digest="SHA-256">C5+lpZ7tcVwmwQIMcRtPbsQtWLABXhQzejna0wHFr8M=</pin>
+
+            <!-- TrustKit rejects the config if we use only one pin, so we add a dud: -->
+            <pin digest="SHA-256">ABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFA</pin>
+        </pin-set>
+        <trust-anchors>
+            <certificates src="@raw/lets_encrypt_isrg_root" />
+        </trust-anchors>
+        <trustkit-config enforcePinning="true">
+            <report-uri>http://trustkit-report-url.test</report-uri>
+        </trustkit-config>
+    </domain-config>
+
+    <!-- We use rsa4096.badssl.com for Appmattus's global config-defined pinning: -->
+    <domain-config>
+        <domain includeSubdomains="false">rsa4096.badssl.com</domain>
         <pin-set>
             <pin digest="SHA-256">C5+lpZ7tcVwmwQIMcRtPbsQtWLABXhQzejna0wHFr8M=</pin>
         </pin-set>

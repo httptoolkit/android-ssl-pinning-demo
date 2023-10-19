@@ -4,9 +4,7 @@ import android.graphics.drawable.Drawable
 import android.net.http.SslError
 import android.os.Bundle
 import android.view.View
-import android.webkit.SslErrorHandler
-import android.webkit.WebView
-import android.webkit.WebViewClient
+import android.webkit.*
 import android.widget.Button
 import android.widget.Toast
 import androidx.annotation.IdRes
@@ -17,7 +15,10 @@ import com.android.volley.toolbox.BasicNetwork
 import com.android.volley.toolbox.HurlStack
 import com.android.volley.toolbox.NoCache
 import com.android.volley.toolbox.StringRequest
+import com.appmattus.certificatetransparency.certificateTransparencyHostnameVerifier
 import com.appmattus.certificatetransparency.certificateTransparencyInterceptor
+import com.appmattus.certificatetransparency.certificateTransparencyTrustManager
+import com.appmattus.certificatetransparency.installCertificateTransparencyProvider
 import com.datatheorem.android.trustkit.TrustKit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -46,6 +47,14 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         TrustKit.initializeWithNetworkSecurityConfiguration(this@MainActivity)
+
+        // Appmattus global setup:
+        installCertificateTransparencyProvider {
+            // Match only our single Appmattus test domain:
+            -"*.httptoolkit.tech"
+            -"*.badssl.com"
+            +"rsa4096.badssl.com"
+        }
     }
 
     private fun onStart(@IdRes id: Int) {
@@ -96,7 +105,7 @@ class MainActivity : AppCompatActivity() {
         GlobalScope.launch(Dispatchers.IO) {
             onStart(R.id.unpinned)
             try {
-                val mURL = URL("https://httptoolkit.com")
+                val mURL = URL("https://amiusing.httptoolkit.tech")
                 with(mURL.openConnection() as HttpsURLConnection) {
                     println("URL: ${this.url}")
                     println("Response Code: ${this.responseCode}")
@@ -116,7 +125,7 @@ class MainActivity : AppCompatActivity() {
 
         var connectionFailed = false
 
-        webView.loadUrl("https://sha256.badssl.com")
+        webView.loadUrl("https://amiusing.httptoolkit.tech")
         webView.webViewClient = object : WebViewClient() {
             override fun onReceivedSslError(
                 view: WebView?,
@@ -161,7 +170,7 @@ class MainActivity : AppCompatActivity() {
             onStart(R.id.okhttp_pinned)
 
             try {
-                val hostname = "sha256.badssl.com"
+                val hostname = "ecc384.badssl.com"
                 val certificatePinner = CertificatePinner.Builder()
                     .add(hostname, "sha256/${LETS_ENCRYPT_ROOT_SHA256}")
                     .build()
@@ -170,7 +179,7 @@ class MainActivity : AppCompatActivity() {
                     .certificatePinner(certificatePinner)
                     .build()
                 val request = Request.Builder()
-                    .url("https://sha256.badssl.com")
+                    .url("https://ecc384.badssl.com")
                     .build()
 
                 client.newCall(request).execute().use { response ->
@@ -216,7 +225,7 @@ class MainActivity : AppCompatActivity() {
             // Make a request using that client:
             val stringRequest = StringRequest(
                 com.android.volley.Request.Method.GET,
-                "https://sha256.badssl.com",
+                "https://ecc384.badssl.com",
                 { _ ->
                     println("Volley success")
                     this@MainActivity.onSuccess(R.id.volley_pinned)
@@ -258,6 +267,26 @@ class MainActivity : AppCompatActivity() {
     fun sendAppmattusCTChecked(view: View) {
         GlobalScope.launch(Dispatchers.IO) {
             onStart(R.id.appmattus_ct_checked)
+
+            try {
+                val mURL = URL("https://sha256.badssl.com")
+                with(mURL.openConnection() as HttpsURLConnection) {
+                    this.hostnameVerifier = certificateTransparencyHostnameVerifier(this.hostnameVerifier)
+                    println("URL: ${this.url}")
+                    println("Response Code: ${this.responseCode}")
+                }
+
+                onSuccess(R.id.appmattus_ct_checked)
+            } catch (e: Throwable) {
+                println(e)
+                onError(R.id.appmattus_ct_checked, e.toString())
+            }
+        }
+    }
+
+    fun sendAppmattusOkHttpCTChecked(view: View) {
+        GlobalScope.launch(Dispatchers.IO) {
+            onStart(R.id.appmattus_okhttp_ct_checked)
             try {
                 val appmattusInterceptor = certificateTransparencyInterceptor()
                 val client = OkHttpClient.Builder().apply {
@@ -272,10 +301,92 @@ class MainActivity : AppCompatActivity() {
                     println("Response Code: ${response.code}")
                 }
 
-                onSuccess(R.id.appmattus_ct_checked)
+                onSuccess(R.id.appmattus_okhttp_ct_checked)
             } catch (e: Throwable) {
                 println(e)
-                onError(R.id.appmattus_ct_checked, e.toString())
+                onError(R.id.appmattus_okhttp_ct_checked, e.toString())
+            }
+        }
+    }
+
+    fun sendAppmattusRawCTChecked(view: View) {
+        GlobalScope.launch(Dispatchers.IO) {
+            onStart(R.id.appmattus_raw_ct_checked)
+
+            val cf = CertificateFactory.getInstance("X.509")
+            val caStream = BufferedInputStream(resources.openRawResource(R.raw.lets_encrypt_isrg_root))
+            val caCertificate = cf.generateCertificate(caStream)
+
+            val keyStore = KeyStore.getInstance(KeyStore.getDefaultType())
+            keyStore.load(null)
+            keyStore.setCertificateEntry("ca", caCertificate)
+
+            val trustManagerFactory = TrustManagerFactory
+                .getInstance(TrustManagerFactory.getDefaultAlgorithm())
+            trustManagerFactory.init(keyStore)
+
+            val originalTrustManagers = trustManagerFactory.trustManagers;
+
+            // Wrap the native trust managers with Appmattus's CT implementation:
+            val ctWrappedTrustManagers = originalTrustManagers.map { tm ->
+                certificateTransparencyTrustManager(tm as X509TrustManager)
+            }.toTypedArray()
+
+            try {
+                val context = SSLContext.getInstance("TLS")
+                context.init(null, ctWrappedTrustManagers, null)
+
+                val mURL = URL("https://ecc384.badssl.com")
+                with(mURL.openConnection() as HttpsURLConnection) {
+                    this.sslSocketFactory = context.socketFactory
+
+                    println("URL: ${this.url}")
+                    println("Response Code: ${this.responseCode}")
+                }
+                onSuccess(R.id.appmattus_raw_ct_checked)
+            } catch (e: Throwable) {
+                println(e)
+                onError(R.id.appmattus_raw_ct_checked, e.toString())
+            }
+        }
+    }
+
+    // Pinned by global setup from installCertificateTransparencyProvider
+    // call in onCreate():
+    fun sendAppmattusCTWebView(view: View) {
+        onStart(R.id.appmattus_webview_ct_checked)
+        val webView = WebView(this@MainActivity)
+
+        var connectionFailed = false
+
+        webView.loadUrl("https://rsa4096.badssl.com")
+        webView.webViewClient = object : WebViewClient() {
+            override fun onReceivedSslError(
+                view: WebView?,
+                handler: SslErrorHandler?,
+                error: SslError?
+            ) {
+                println("Appmattus webview SSL error: " + error.toString())
+                onError(R.id.appmattus_webview_ct_checked, error.toString())
+                connectionFailed = true
+                handler?.cancel()
+            }
+
+            override fun onReceivedError(
+                view: WebView?,
+                request: WebResourceRequest?,
+                error: WebResourceError?
+            ) {
+                println("Appmattus webview error: " + error.toString())
+                onError(R.id.appmattus_webview_ct_checked, error.toString())
+                connectionFailed = true
+            }
+
+            override fun onPageFinished(view: WebView?, url: String?) {
+                if (connectionFailed) return
+
+                println("Appmattus WebView loaded OK")
+                onSuccess(R.id.appmattus_webview_ct_checked)
             }
         }
     }
@@ -302,7 +413,7 @@ class MainActivity : AppCompatActivity() {
                 val context = SSLContext.getInstance("TLS")
                 context.init(null, trustManagerFactory.trustManagers, null)
 
-                val mURL = URL("https://sha256.badssl.com")
+                val mURL = URL("https://ecc384.badssl.com")
                 with(mURL.openConnection() as HttpsURLConnection) {
                     this.sslSocketFactory = context.socketFactory
 
@@ -338,7 +449,7 @@ class MainActivity : AppCompatActivity() {
                 val context = SSLContext.getInstance("TLS")
                 context.init(null, trustManager, null)
 
-                val socket = context.socketFactory.createSocket("sha256.badssl.com", 443) as SSLSocket
+                val socket = context.socketFactory.createSocket("ecc384.badssl.com", 443) as SSLSocket
 
                 val certs = socket.session.peerCertificates
 
@@ -350,7 +461,7 @@ class MainActivity : AppCompatActivity() {
                 // Send a real request, just to make it clear that we trust the connection:
                 val pw = PrintWriter(socket.outputStream)
                 pw.println("GET / HTTP/1.1")
-                pw.println("Host: sha256.badssl.com")
+                pw.println("Host: ecc384.badssl.com")
                 pw.println("")
                 pw.flush()
 

@@ -63,7 +63,28 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:onClick="sendAppmattusCTChecked"
-            android:text="Appmattus CT-checked request" />
+            android:text="Appmattus CT request" />
+
+        <Button
+            android:id="@+id/appmattus_okhttp_ct_checked"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="sendAppmattusOkHttpCTChecked"
+            android:text="Appmattus+OkHttp CT request" />
+
+        <Button
+            android:id="@+id/appmattus_raw_ct_checked"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="sendAppmattusRawCTChecked"
+            android:text="Appmattus+raw TLS CT" />
+
+        <Button
+            android:id="@+id/appmattus_webview_ct_checked"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="sendAppmattusCTWebView"
+            android:text="Appmattus+WebView CT" />
 
         <Button
             android:id="@+id/custom_context_pinned"
@@ -77,7 +98,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:onClick="sendCustomRawSocketPinned"
-            android:text="Custom manually pinned request" />
+            android:text="Custom manually pinned raw request" />
 
     </LinearLayout>
 
