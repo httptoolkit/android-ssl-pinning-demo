@@ -165,6 +165,44 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // Manually pinned by building an SSLContext that trusts only the correct certificate, and then
+    // connecting with the native HttpsUrlConnection API:
+    fun sendContextPinned(view: View) {
+        GlobalScope.launch(Dispatchers.IO) {
+            onStart(R.id.context_pinned)
+
+            val cf = CertificateFactory.getInstance("X.509")
+            val caStream = BufferedInputStream(resources.openRawResource(R.raw.lets_encrypt_isrg_root))
+            val caCertificate = cf.generateCertificate(caStream)
+
+            val keyStore = KeyStore.getInstance(KeyStore.getDefaultType())
+            keyStore.load(null)
+            keyStore.setCertificateEntry("ca", caCertificate)
+
+            val trustManagerFactory = TrustManagerFactory
+                .getInstance(TrustManagerFactory.getDefaultAlgorithm())
+            trustManagerFactory.init(keyStore)
+
+            try {
+                val context = SSLContext.getInstance("TLS")
+                context.init(null, trustManagerFactory.trustManagers, null)
+
+                val mURL = URL("https://ecc384.badssl.com")
+                with(mURL.openConnection() as HttpsURLConnection) {
+                    this.sslSocketFactory = context.socketFactory
+
+                    println("URL: ${this.url}")
+                    println("Response Code: ${this.responseCode}")
+                }
+
+                onSuccess(R.id.context_pinned)
+            } catch (e: Throwable) {
+                println(e)
+                onError(R.id.context_pinned, e.toString())
+            }
+        }
+    }
+
     fun sendOkHttpPinned(view: View) {
         GlobalScope.launch(Dispatchers.IO) {
             onStart(R.id.okhttp_pinned)
@@ -387,44 +425,6 @@ class MainActivity : AppCompatActivity() {
 
                 println("Appmattus WebView loaded OK")
                 onSuccess(R.id.appmattus_webview_ct_checked)
-            }
-        }
-    }
-
-    // Manually pinned by building an SSLContext that trusts only the correct certificate, and then
-    // connecting with the native HttpsUrlConnection API:
-    fun sendCustomContextPinned(view: View) {
-        GlobalScope.launch(Dispatchers.IO) {
-            onStart(R.id.custom_context_pinned)
-
-            val cf = CertificateFactory.getInstance("X.509")
-            val caStream = BufferedInputStream(resources.openRawResource(R.raw.lets_encrypt_isrg_root))
-            val caCertificate = cf.generateCertificate(caStream)
-
-            val keyStore = KeyStore.getInstance(KeyStore.getDefaultType())
-            keyStore.load(null)
-            keyStore.setCertificateEntry("ca", caCertificate)
-
-            val trustManagerFactory = TrustManagerFactory
-                .getInstance(TrustManagerFactory.getDefaultAlgorithm())
-            trustManagerFactory.init(keyStore)
-
-            try {
-                val context = SSLContext.getInstance("TLS")
-                context.init(null, trustManagerFactory.trustManagers, null)
-
-                val mURL = URL("https://ecc384.badssl.com")
-                with(mURL.openConnection() as HttpsURLConnection) {
-                    this.sslSocketFactory = context.socketFactory
-
-                    println("URL: ${this.url}")
-                    println("Response Code: ${this.responseCode}")
-                }
-
-                onSuccess(R.id.custom_context_pinned)
-            } catch (e: Throwable) {
-                println(e)
-                onError(R.id.custom_context_pinned, e.toString())
             }
         }
     }

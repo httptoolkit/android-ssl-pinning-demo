@@ -1,105 +1,127 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <LinearLayout
-        android:id="@+id/linearLayout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="10dp">
 
-        <Button
-            android:id="@+id/unpinned"
+        <LinearLayout
+            android:id="@+id/linearLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:onClick="sendUnpinned"
-            android:text="Unpinned request" />
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
-        <Button
-            android:id="@+id/webview_unpinned"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:onClick="sendUnpinnedWebView"
-            android:text="Unpinned WebView request" />
+            <Button
+                android:id="@+id/unpinned"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="sendUnpinned"
+                android:text="Unpinned request" />
 
-        <Button
-            android:id="@+id/config_pinned"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:onClick="sendConfigPinned"
-            android:text="Config-pinned request" />
+            <Button
+                android:id="@+id/webview_unpinned"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="sendUnpinnedWebView"
+                android:text="Unpinned WebView request" />
 
-        <Button
-            android:id="@+id/okhttp_pinned"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:onClick="sendOkHttpPinned"
-            android:text="OkHTTP pinned request" />
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
+                android:background="@android:color/darker_gray"/>
 
-        <Button
-            android:id="@+id/volley_pinned"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:onClick="sendVolleyPinned"
-            android:text="Volley pinned request" />
+            <Button
+                android:id="@+id/config_pinned"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="sendConfigPinned"
+                android:text="Config-pinned request" />
 
-        <Button
-            android:id="@+id/trustkit_pinned"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:onClick="sendTrustKitPinned"
-            android:text="TrustKit pinned request" />
+            <Button
+                android:id="@+id/context_pinned"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="sendContextPinned"
+                android:text="Context-pinned request" />
 
-        <Button
-            android:id="@+id/appmattus_ct_checked"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:onClick="sendAppmattusCTChecked"
-            android:text="Appmattus CT request" />
+            <Button
+                android:id="@+id/okhttp_pinned"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="sendOkHttpPinned"
+                android:text="OkHTTP pinned request" />
 
-        <Button
-            android:id="@+id/appmattus_okhttp_ct_checked"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:onClick="sendAppmattusOkHttpCTChecked"
-            android:text="Appmattus+OkHttp CT request" />
+            <Button
+                android:id="@+id/volley_pinned"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="sendVolleyPinned"
+                android:text="Volley pinned request" />
 
-        <Button
-            android:id="@+id/appmattus_raw_ct_checked"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:onClick="sendAppmattusRawCTChecked"
-            android:text="Appmattus+raw TLS CT" />
+            <Button
+                android:id="@+id/trustkit_pinned"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="sendTrustKitPinned"
+                android:text="TrustKit pinned request" />
 
-        <Button
-            android:id="@+id/appmattus_webview_ct_checked"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:onClick="sendAppmattusCTWebView"
-            android:text="Appmattus+WebView CT" />
+            <Button
+                android:id="@+id/appmattus_ct_checked"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="sendAppmattusCTChecked"
+                android:text="Appmattus CT request" />
 
-        <Button
-            android:id="@+id/custom_context_pinned"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:onClick="sendCustomContextPinned"
-            android:text="Custom context-pinned request" />
+            <Button
+                android:id="@+id/appmattus_okhttp_ct_checked"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="sendAppmattusOkHttpCTChecked"
+                android:text="Appmattus+OkHttp CT request" />
 
-        <Button
-            android:id="@+id/custom_raw_socket_pinned"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:onClick="sendCustomRawSocketPinned"
-            android:text="Custom manually pinned raw request" />
+            <Button
+                android:id="@+id/appmattus_raw_ct_checked"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="sendAppmattusRawCTChecked"
+                android:text="Appmattus+raw TLS CT" />
 
-    </LinearLayout>
+            <Button
+                android:id="@+id/appmattus_webview_ct_checked"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="sendAppmattusCTWebView"
+                android:text="Appmattus+WebView CT" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
+                android:background="@android:color/darker_gray"/>
+
+            <Button
+                android:id="@+id/custom_raw_socket_pinned"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="sendCustomRawSocketPinned"
+                android:text="Raw custom-pinned request" />
+
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>
