@@ -17,6 +17,7 @@ import com.android.volley.toolbox.BasicNetwork
 import com.android.volley.toolbox.HurlStack
 import com.android.volley.toolbox.NoCache
 import com.android.volley.toolbox.StringRequest
+import com.appmattus.certificatetransparency.certificateTransparencyInterceptor
 import com.datatheorem.android.trustkit.TrustKit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -250,6 +251,31 @@ class MainActivity : AppCompatActivity() {
             } catch (e: Throwable) {
                 println(e)
                 onError(R.id.trustkit_pinned, e.toString())
+            }
+        }
+    }
+
+    fun sendAppmattusCTChecked(view: View) {
+        GlobalScope.launch(Dispatchers.IO) {
+            onStart(R.id.appmattus_ct_checked)
+            try {
+                val appmattusInterceptor = certificateTransparencyInterceptor()
+                val client = OkHttpClient.Builder().apply {
+                    addNetworkInterceptor(appmattusInterceptor)
+                }.build()
+                val request = Request.Builder()
+                    .url("https://sha256.badssl.com")
+                    .build()
+
+                client.newCall(request).execute().use { response ->
+                    println("URL: ${request.url}")
+                    println("Response Code: ${response.code}")
+                }
+
+                onSuccess(R.id.appmattus_ct_checked)
+            } catch (e: Throwable) {
+                println(e)
+                onError(R.id.appmattus_ct_checked, e.toString())
             }
         }
     }

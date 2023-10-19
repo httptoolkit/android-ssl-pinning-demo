@@ -59,6 +59,13 @@
             android:text="TrustKit pinned request" />
 
         <Button
+            android:id="@+id/appmattus_ct_checked"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="sendAppmattusCTChecked"
+            android:text="Appmattus CT-checked request" />
+
+        <Button
             android:id="@+id/custom_context_pinned"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
