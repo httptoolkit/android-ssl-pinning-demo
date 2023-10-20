@@ -20,6 +20,7 @@ import com.appmattus.certificatetransparency.certificateTransparencyInterceptor
 import com.appmattus.certificatetransparency.certificateTransparencyTrustManager
 import com.appmattus.certificatetransparency.installCertificateTransparencyProvider
 import com.datatheorem.android.trustkit.TrustKit
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -41,6 +42,8 @@ import javax.net.ssl.*
 
 const val LETS_ENCRYPT_ROOT_SHA256 = "C5+lpZ7tcVwmwQIMcRtPbsQtWLABXhQzejna0wHFr8M="
 
+@Suppress("UNUSED_PARAMETER")
+@DelicateCoroutinesApi
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
