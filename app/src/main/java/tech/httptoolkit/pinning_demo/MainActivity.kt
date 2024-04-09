@@ -40,7 +40,11 @@ import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import javax.net.ssl.*
 
-const val LETS_ENCRYPT_ROOT_SHA256 = "C5+lpZ7tcVwmwQIMcRtPbsQtWLABXhQzejna0wHFr8M="
+// We check for both the long-term root & intermediate, because some servers don't seem to
+// include the ISRG in the chain (assuming it's in our trust store). Unfortunately the R3
+// intermediate cert will expire in September 2025, but we may have our own testserver by then.
+const val LETS_ENCRYPT_ISRG_X1_ROOT_PK_SHA256 = "C5+lpZ7tcVwmwQIMcRtPbsQtWLABXhQzejna0wHFr8M="
+const val LETS_ENCRYPT_R3_INTERM_PK_SHA256 = "jQJTbIh0grw0/1TkHSumWb+Fs0Ggogr621gT3PvPKG0="
 
 @Suppress("UNUSED_PARAMETER")
 @DelicateCoroutinesApi
@@ -213,7 +217,8 @@ class MainActivity : AppCompatActivity() {
             try {
                 val hostname = "ecc384.badssl.com"
                 val certificatePinner = CertificatePinner.Builder()
-                    .add(hostname, "sha256/${LETS_ENCRYPT_ROOT_SHA256}")
+                    .add(hostname, "sha256/${LETS_ENCRYPT_ISRG_X1_ROOT_PK_SHA256}")
+                    .add(hostname, "sha256/${LETS_ENCRYPT_R3_INTERM_PK_SHA256}")
                     .build()
 
                 val client = OkHttpClient.Builder()
@@ -456,7 +461,10 @@ class MainActivity : AppCompatActivity() {
 
                 val certs = socket.session.peerCertificates
 
-                if (!certs.any { cert -> doesCertMatchPin(LETS_ENCRYPT_ROOT_SHA256, cert) }) {
+                if (!certs.any { cert ->
+                        doesCertMatchPin(LETS_ENCRYPT_ISRG_X1_ROOT_PK_SHA256, cert) ||
+                        doesCertMatchPin(LETS_ENCRYPT_R3_INTERM_PK_SHA256, cert)
+                }) {
                     socket.close() // Close the socket immediately without sending a request
                     throw Error("Unrecognized cert hash.")
                 }
