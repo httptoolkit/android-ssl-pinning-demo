@@ -37,6 +37,13 @@
                 android:onClick="sendUnpinnedWebView"
                 android:text="Unpinned WebView request" />
 
+            <Button
+                android:id="@+id/http3_unpinned"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="sendUnpinnedHttp3"
+                android:text="Unpinned HTTP/3 request" />
+
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"

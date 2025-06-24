@@ -153,6 +153,45 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    fun sendUnpinnedHttp3(view: View) {
+        onStart(R.id.http3_unpinned)
+        val context = this@MainActivity
+
+        val cronetEngine = org.chromium.net.CronetEngine.Builder(context)
+            .enableQuic(true)
+            .addQuicHint("www.google.com", 443, 443)
+            .build()
+        val requestBuilder = cronetEngine.newUrlRequestBuilder(
+            "https://www.google.com/",
+            object : org.chromium.net.UrlRequest.Callback() {
+                override fun onRedirectReceived(request: org.chromium.net.UrlRequest, info: org.chromium.net.UrlResponseInfo, newLocationUrl: String) {}
+                override fun onReadCompleted(request: org.chromium.net.UrlRequest, info: org.chromium.net.UrlResponseInfo, byteBuffer: java.nio.ByteBuffer) {}
+                override fun onSucceeded(request: org.chromium.net.UrlRequest, info: org.chromium.net.UrlResponseInfo) {}
+
+                override fun onResponseStarted(request: org.chromium.net.UrlRequest, info: org.chromium.net.UrlResponseInfo) {
+                    request.cancel()
+                    if (info.negotiatedProtocol == "h3") {
+                        onSuccess(R.id.http3_unpinned)
+                    } else {
+                        onError(R.id.http3_unpinned, "Expected HTTP/3, got ${info.negotiatedProtocol}")
+                        onSuccess(R.id.http3_unpinned)
+                    }
+                }
+
+                override fun onFailed(request: org.chromium.net.UrlRequest, info: org.chromium.net.UrlResponseInfo?, error: org.chromium.net.CronetException) {
+                    println("h3 request failed: $error")
+                    onError(R.id.http3_unpinned, error.toString())
+                }
+            },
+            java.util.concurrent.Executors.newSingleThreadExecutor()
+        )
+
+        requestBuilder
+            .disableCache()
+            .build()
+            .start()
+    }
+
     fun sendConfigPinned(view: View) {
         GlobalScope.launch(Dispatchers.IO) {
             onStart(R.id.config_pinned)
