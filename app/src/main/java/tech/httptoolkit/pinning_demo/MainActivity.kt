@@ -87,6 +87,7 @@ class MainActivity : AppCompatActivity() {
                 R.drawable.baseline_check_circle_24
             )!!
             button.setCompoundDrawablesWithIntrinsicBounds(img, null, null, null)
+            button.contentDescription = "${button.text} - Success"
         }
     }
 
@@ -101,6 +102,7 @@ class MainActivity : AppCompatActivity() {
                 R.drawable.baseline_cancel_24
             )!!
             button.setCompoundDrawablesWithIntrinsicBounds(img, null, null, null)
+            button.contentDescription = "${button.text} - Failed with error: $message"
 
             val duration = Toast.LENGTH_LONG
             val toast = Toast.makeText(this@MainActivity, message, duration)
