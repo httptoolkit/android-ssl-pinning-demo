@@ -1,2 +1,10 @@
 include ':app'
 rootProject.name = "SSL Pinning Demo"
+
+
+setBinding(new Binding([gradle: this]))
+evaluate(new File(
+  settingsDir.absoluteFile,
+  'flutter_module/.android/include_flutter.groovy'
+))
+

@@ -7,7 +7,7 @@ def keyStorePassword = System.getenv('KEYSTORE_PASSWORD')
 def keyAvailable = !!keyStorePassword
 
 android {
-    compileSdkVersion 33
+    compileSdkVersion 35
 
     defaultConfig {
         applicationId "tech.httptoolkit.pinning_demo"
@@ -64,4 +64,6 @@ dependencies {
     implementation 'androidx.preference:preference-ktx:1.1.1'
     implementation 'com.appmattus.certificatetransparency:certificatetransparency-android:2.5.18'
     implementation 'org.chromium.net:cronet-embedded:119.6045.31'
+
+    implementation project(':flutter')
 }

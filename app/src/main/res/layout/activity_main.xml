@@ -122,6 +122,13 @@
                 android:background="@android:color/darker_gray"/>
 
             <Button
+                android:id="@+id/flutter_request"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="sendFlutterRequest"
+                android:text="Flutter request" />
+
+            <Button
                 android:id="@+id/custom_raw_socket_pinned"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

@@ -20,6 +20,9 @@ import com.appmattus.certificatetransparency.certificateTransparencyInterceptor
 import com.appmattus.certificatetransparency.certificateTransparencyTrustManager
 import com.appmattus.certificatetransparency.installCertificateTransparencyProvider
 import com.datatheorem.android.trustkit.TrustKit
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.embedding.engine.dart.DartExecutor
+import io.flutter.plugin.common.MethodChannel
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -49,6 +52,9 @@ const val LETS_ENCRYPT_R3_INTERM_PK_SHA256 = "jQJTbIh0grw0/1TkHSumWb+Fs0Ggogr621
 @Suppress("UNUSED_PARAMETER")
 @DelicateCoroutinesApi
 class MainActivity : AppCompatActivity() {
+
+    private var flutterEngine: FlutterEngine? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -62,6 +68,17 @@ class MainActivity : AppCompatActivity() {
             -"*.badssl.com"
             +"rsa4096.badssl.com"
         }
+
+        // Prepare the flutter engine:
+        flutterEngine = FlutterEngine(this)
+        flutterEngine!!.dartExecutor.executeDartEntrypoint(
+            DartExecutor.DartEntrypoint.createDefault()
+        )
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        flutterEngine?.destroy()
     }
 
     private fun onStart(@IdRes id: Int) {
@@ -476,6 +493,29 @@ class MainActivity : AppCompatActivity() {
                 onSuccess(R.id.appmattus_webview_ct_checked)
             }
         }
+    }
+
+    fun sendFlutterRequest(view: View) {
+        onStart(R.id.flutter_request)
+
+        val channel = MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, "tech.httptoolkit.pinning_demo.flutter_channel")
+
+        println("Calling Dart method from Kotlin...")
+        channel.invokeMethod("sendRequest", "https://ecc384.badssl.com/", object : MethodChannel.Result {
+            override fun success(result: Any?) {
+                println("Success from Dart: $result")
+                onSuccess(R.id.flutter_request)
+            }
+
+            override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {
+                println("Error: $errorCode - $errorMessage")
+                onError(R.id.flutter_request, errorMessage ?: "Unknown error")
+            }
+
+            override fun notImplemented() {
+                println("Method not implemented on Dart side.")
+            }
+        })
     }
 
     // Manually pinned at the lowest level: creating a raw TLS connection, disabling all checks,
