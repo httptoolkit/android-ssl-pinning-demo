@@ -43,7 +43,7 @@ import javax.net.ssl.*
 // We check for both the long-term root & intermediate, because some servers don't seem to
 // include the ISRG in the chain (assuming it's in our trust store). Unfortunately the R3
 // intermediate cert will expire in September 2025, but we may have our own testserver by then.
-const val LETS_ENCRYPT_ISRG_X1_ROOT_PK_SHA256 = "C5+lpZ7tcVwmwQIMcRtPbsQtWLABXhQzejna0wHFr8M="
+const val LETS_ENCRYPT_ISRG_X1_ROOT_PK_SHA256 = "NYbU7PBwV4y9J67c4guWTki8FJ+uudrXL0a4V4aRcrg="
 const val LETS_ENCRYPT_R3_INTERM_PK_SHA256 = "jQJTbIh0grw0/1TkHSumWb+Fs0Ggogr621gT3PvPKG0="
 
 @Suppress("UNUSED_PARAMETER")
