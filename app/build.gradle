@@ -9,6 +9,9 @@ def keyAvailable = !!keyStorePassword
 android {
     compileSdkVersion 35
 
+    // N.b. if this exact NDK version isn't installed, symbols aren't stripped and the APK will be enormous
+    ndkVersion "25.2.9519653"
+
     defaultConfig {
         applicationId "tech.httptoolkit.pinning_demo"
         minSdkVersion 24
