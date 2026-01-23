@@ -2,7 +2,9 @@
 <network-security-config>
 
     <!-- We use amiusing.httptoolkit.tech for unpinned requests -->
-
+    <domain-config cleartextTrafficPermitted="true">
+    <domain includeSubdomains="false">amiusing.httptoolkit.tech</domain>
+    </domain-config>
     <!-- We use ecc384.badssl.com for manual pinning, defined in code -->
 
     <!-- We use sha256.badssl.com for normal config-defined pinning: -->

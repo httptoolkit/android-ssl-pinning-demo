@@ -36,6 +36,8 @@ import java.io.BufferedInputStream
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.PrintWriter
+import java.net.HttpURLConnection
+import java.net.Proxy
 import java.net.URL
 import java.security.KeyStore
 import java.security.cert.Certificate
@@ -125,6 +127,42 @@ class MainActivity : AppCompatActivity() {
             val duration = Toast.LENGTH_LONG
             val toast = Toast.makeText(this@MainActivity, message, duration)
             toast.show()
+        }
+    }
+
+    fun sendHttpRequest(view: View) {
+        GlobalScope.launch(Dispatchers.IO) {
+            onStart(R.id.http_request)
+            try {
+                val mURL = URL("http://amiusing.httptoolkit.tech")
+                with(mURL.openConnection() as HttpURLConnection) {
+                    println("URL: ${this.url}")
+                    println("Response Code: ${this.responseCode}")
+                }
+
+                onSuccess(R.id.http_request)
+            } catch (e: Throwable) {
+                println(e)
+                onError(R.id.http_request, e.toString())
+            }
+        }
+    }
+
+    fun sendIgnoreProxyHttpRequest(view: View) {
+        GlobalScope.launch(Dispatchers.IO) {
+            onStart(R.id.ignore_proxy_http_request)
+            try {
+                val mURL = URL("http://amiusing.httptoolkit.tech")
+                with(mURL.openConnection(Proxy.NO_PROXY) as HttpURLConnection) {
+                    println("URL: ${this.url}")
+                    println("Response Code: ${this.responseCode}")
+                }
+
+                onSuccess(R.id.ignore_proxy_http_request)
+            } catch (e: Throwable) {
+                println(e)
+                onError(R.id.ignore_proxy_http_request, e.toString())
+            }
         }
     }
 

@@ -24,6 +24,27 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <Button
+                android:id="@+id/http_request"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="sendHttpRequest"
+                android:text="Plain HTTP request" />
+
+            <Button
+                android:id="@+id/ignore_proxy_http_request"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="sendIgnoreProxyHttpRequest"
+                android:text="Plain ignore-proxy HTTP request" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
+                android:background="@android:color/darker_gray"/>
+
+            <Button
                 android:id="@+id/unpinned"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
