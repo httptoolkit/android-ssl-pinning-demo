@@ -16,6 +16,15 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Generate Flutter Android files
+        run: flutter pub get
+        working-directory: flutter_module
+
       - name: Build release
         run: ./gradlew assembleRelease
         env:
