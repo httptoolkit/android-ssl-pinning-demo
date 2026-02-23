@@ -14,8 +14,10 @@ On a normal unintercepted device, every button should always immediately pass.
 
 On a device whose HTTPS is being intercepted (e.g. with [HTTP Toolkit](https://httptoolkit.com/android/)), the unpinned buttons will pass, and then all other buttons the first 'unpinned' buttons will fail.
 
-On an intercepted device using a standard Frida script (or similar) to automatically disable certificate pinning (e.g. https://github.com/httptoolkit/frida-interception-and-unpinning/) all buttons should pass _except_ the final "custom-pinned" button.
+On an intercepted device using a standard Frida script (or similar) to automatically disable certificate pinning (e.g. https://github.com/httptoolkit/frida-interception-and-unpinning/) all buttons should pass _except_ the final "custom-pinned" button and the Flutter request.
 
 That final button uses low-level manual checks against the TLS connection, with no external libraries or config involved. It is still possible to make this pass too, but you'll need to do a little reverse engineering to disable that code specifically. See [this Android reverse engineering blog post](https://httptoolkit.com/blog/android-reverse-engineering/) for more details.
+
+The Flutter request is part of the experimental work being done in [frida-interception-and-unpinning](https://github.com/httptoolkit/frida-interception-and-unpinning) and for now will require other means for bypassing.
 
 <img width=200 src="https://raw.githubusercontent.com/httptoolkit/android-ssl-pinning-demo/main/screenshot.png" alt="A screenshot of the app in action" />
