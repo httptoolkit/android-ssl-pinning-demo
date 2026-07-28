@@ -4,6 +4,7 @@ import android.graphics.drawable.Drawable
 import android.net.http.SslError
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
 import android.webkit.*
 import android.widget.Button
 import android.widget.Toast
@@ -57,6 +58,14 @@ const val LETS_ENCRYPT_R3_INTERM_PK_SHA256 = "y7xVm0TVJNahMr2sZydE2jQH8SquXV9yLF
 class MainActivity : AppCompatActivity() {
 
     private var flutterEngine: FlutterEngine? = null
+
+    // A detached WebView never lays out, and so never completes a page load. Attaching it (at 1x1,
+    // so it's effectively invisible) is what makes the load actually run and report back.
+    private fun createAttachedWebView(): WebView {
+        val webView = WebView(this)
+        findViewById<ViewGroup>(android.R.id.content).addView(webView, 1, 1)
+        return webView
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -186,11 +195,10 @@ class MainActivity : AppCompatActivity() {
 
     fun sendUnpinnedWebView(view: View) {
         onStart(R.id.webview_unpinned)
-        val webView = WebView(this@MainActivity)
+        val webView = createAttachedWebView()
 
         var connectionFailed = false
 
-        webView.loadUrl("https://amiusing.httptoolkit.tech")
         webView.webViewClient = object : WebViewClient() {
             override fun onReceivedSslError(
                 view: WebView?,
@@ -202,6 +210,18 @@ class MainActivity : AppCompatActivity() {
                 handler?.cancel()
             }
 
+            override fun onReceivedError(
+                view: WebView?,
+                request: WebResourceRequest?,
+                error: WebResourceError?
+            ) {
+                if (request?.isForMainFrame != true) return
+
+                println("Unpinned WebView error: $error")
+                onError(R.id.webview_unpinned, error.toString())
+                connectionFailed = true
+            }
+
             override fun onPageFinished(view: WebView?, url: String?) {
                 if (connectionFailed) return
 
@@ -209,6 +229,7 @@ class MainActivity : AppCompatActivity() {
                 onSuccess(R.id.webview_unpinned)
             }
         }
+        webView.loadUrl("https://amiusing.httptoolkit.tech")
     }
 
     fun sendUnpinnedHttp3(view: View) {
@@ -231,6 +252,8 @@ class MainActivity : AppCompatActivity() {
                     if (info.negotiatedProtocol == "h3") {
                         onSuccess(R.id.http3_unpinned)
                     } else {
+                        // Toast the downgrade to highlight it, but still count the request as a
+                        // success - it was sent, just not over HTTP/3:
                         onError(R.id.http3_unpinned, "Expected HTTP/3, got ${info.negotiatedProtocol}")
                         onSuccess(R.id.http3_unpinned)
                     }
@@ -498,11 +521,10 @@ class MainActivity : AppCompatActivity() {
     // call in onCreate():
     fun sendAppmattusCTWebView(view: View) {
         onStart(R.id.appmattus_webview_ct_checked)
-        val webView = WebView(this@MainActivity)
+        val webView = createAttachedWebView()
 
         var connectionFailed = false
 
-        webView.loadUrl("https://rsa4096.badssl.com")
         webView.webViewClient = object : WebViewClient() {
             override fun onReceivedSslError(
                 view: WebView?,
@@ -532,6 +554,7 @@ class MainActivity : AppCompatActivity() {
                 onSuccess(R.id.appmattus_webview_ct_checked)
             }
         }
+        webView.loadUrl("https://rsa4096.badssl.com")
     }
 
     fun sendFlutterRequest(view: View) {
