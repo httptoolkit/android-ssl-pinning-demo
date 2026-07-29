@@ -46,11 +46,36 @@ import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import javax.net.ssl.*
 
-// We check for both the long-term root & intermediate, because some servers don't seem to
-// include the ISRG in the chain (assuming it's in our trust store). Unfortunately the R3
-// intermediate cert will expire in September 2025, but we may have our own testserver by then.
-const val LETS_ENCRYPT_ISRG_X1_ROOT_PK_SHA256 = "J2Rs/XhqmFqx7ihj0wVdUwVKMp9txlbWZCUK6zdaylg="
-const val LETS_ENCRYPT_R3_INTERM_PK_SHA256 = "y7xVm0TVJNahMr2sZydE2jQH8SquXV9yLF9seROHHHU="
+// Every button uses its own hostname, so that whatever blocks (or fails to block) a request is
+// unambiguously the feature that button demonstrates, rather than another button's config or the
+// platform defaults leaking across. See network_security_config.xml for the matching config.
+
+// No pinning at all - the baseline that everything else is compared against:
+const val UNGUARDED_HOST = "testserver.host"
+
+// Hosts issued by testserver.host's own CA, which we pin against. That CA's root is served in the
+// chain (unlike most public CAs) so even the raw socket check below can pin it directly, and it
+// doesn't rotate underneath us:
+const val CONFIG_PINNED_HOST = "rsa2048--untrusted-root.testserver.host"
+const val TRUSTKIT_PINNED_HOST = "rsa4096--untrusted-root.testserver.host"
+const val CODE_PINNED_HOST = "rsa8192--untrusted-root.testserver.host"
+
+// Certificate Transparency only exists for publicly trusted CAs, so the Appmattus buttons use
+// public (Google Trust Services) hosts instead, one per integration point.
+//
+// These deliberately use testserver.host's combined modes, which accept either protocol or TLS
+// version rather than requiring one. A single-mode host (e.g. h2-only) is reachable by some of
+// our HTTP stacks but not others - HttpsURLConnection speaks only HTTP/1.1 - and the resulting
+// handshake failure surfaces as an unrelated-looking connection error, which is exactly the kind
+// of misattribution the per-button hostnames exist to avoid:
+const val CT_HOSTNAME_VERIFIER_HOST = "tls-v1-2--tls-v1-3.testserver.host"
+const val CT_OKHTTP_HOST = "http2--http1.testserver.host"
+const val CT_TRUST_MANAGER_HOST = "http1--http2.testserver.host"
+const val CT_WEBVIEW_HOST = "tls-v1-3--tls-v1-2.testserver.host"
+
+// testserver.host's own CA, which serves its root in the chain, so we can pin either:
+const val TESTSERVER_ROOT_PK_SHA256 = "SOCynZ/Y0dEFXgzk6JBT75LF3JhnwWGNJ4SMOmU8CIY="
+const val TESTSERVER_INTERMEDIATE_PK_SHA256 = "UoKxGKz3meAmeM9JwHt6hfBs6jG0BqwgJ4vuYBiCeG4="
 
 
 @Suppress("UNUSED_PARAMETER")
@@ -75,10 +100,11 @@ class MainActivity : AppCompatActivity() {
 
         // Appmattus global setup:
         installCertificateTransparencyProvider {
-            // Match only our single Appmattus test domain:
-            -"*.httptoolkit.tech"
-            -"*.badssl.com"
-            +"rsa4096.badssl.com"
+            // Match only our single Appmattus test domain, so this global provider can't
+            // silently affect the other buttons:
+            -"testserver.host"
+            -"*.testserver.host"
+            +CT_WEBVIEW_HOST
         }
 
         // Prepare the flutter engine:
@@ -143,7 +169,7 @@ class MainActivity : AppCompatActivity() {
         GlobalScope.launch(Dispatchers.IO) {
             onStart(R.id.http_request)
             try {
-                val mURL = URL("http://amiusing.httptoolkit.tech")
+                val mURL = URL("http://$UNGUARDED_HOST")
                 with(mURL.openConnection() as HttpURLConnection) {
                     println("URL: ${this.url}")
                     println("Response Code: ${this.responseCode}")
@@ -161,7 +187,7 @@ class MainActivity : AppCompatActivity() {
         GlobalScope.launch(Dispatchers.IO) {
             onStart(R.id.ignore_proxy_http_request)
             try {
-                val mURL = URL("http://amiusing.httptoolkit.tech")
+                val mURL = URL("http://$UNGUARDED_HOST")
                 with(mURL.openConnection(Proxy.NO_PROXY) as HttpURLConnection) {
                     println("URL: ${this.url}")
                     println("Response Code: ${this.responseCode}")
@@ -179,7 +205,7 @@ class MainActivity : AppCompatActivity() {
         GlobalScope.launch(Dispatchers.IO) {
             onStart(R.id.unpinned)
             try {
-                val mURL = URL("https://amiusing.httptoolkit.tech")
+                val mURL = URL("https://$UNGUARDED_HOST")
                 with(mURL.openConnection() as HttpsURLConnection) {
                     println("URL: ${this.url}")
                     println("Response Code: ${this.responseCode}")
@@ -229,7 +255,7 @@ class MainActivity : AppCompatActivity() {
                 onSuccess(R.id.webview_unpinned)
             }
         }
-        webView.loadUrl("https://amiusing.httptoolkit.tech")
+        webView.loadUrl("https://$UNGUARDED_HOST")
     }
 
     fun sendUnpinnedHttp3(view: View) {
@@ -278,7 +304,7 @@ class MainActivity : AppCompatActivity() {
             onStart(R.id.config_pinned)
             try {
                 // Pinned by hash in network config:
-                val mURL = URL("https://sha256.badssl.com")
+                val mURL = URL("https://$CONFIG_PINNED_HOST")
                 with(mURL.openConnection() as HttpsURLConnection) {
                     println("URL: ${this.url}")
                     println("Response Code: ${this.responseCode}")
@@ -299,7 +325,7 @@ class MainActivity : AppCompatActivity() {
             onStart(R.id.context_pinned)
 
             val cf = CertificateFactory.getInstance("X.509")
-            val caStream = BufferedInputStream(resources.openRawResource(R.raw.lets_encrypt_isrg_root))
+            val caStream = BufferedInputStream(resources.openRawResource(R.raw.testserver_root))
             val caCertificate = cf.generateCertificate(caStream)
 
             val keyStore = KeyStore.getInstance(KeyStore.getDefaultType())
@@ -314,7 +340,7 @@ class MainActivity : AppCompatActivity() {
                 val context = SSLContext.getInstance("TLS")
                 context.init(null, trustManagerFactory.trustManagers, null)
 
-                val mURL = URL("https://ecc384.badssl.com")
+                val mURL = URL("https://$CODE_PINNED_HOST")
                 with(mURL.openConnection() as HttpsURLConnection) {
                     this.sslSocketFactory = context.socketFactory
 
@@ -335,17 +361,17 @@ class MainActivity : AppCompatActivity() {
             onStart(R.id.okhttp_pinned)
 
             try {
-                val hostname = "ecc384.badssl.com"
+                val hostname = CODE_PINNED_HOST
                 val certificatePinner = CertificatePinner.Builder()
-                    .add(hostname, "sha256/${LETS_ENCRYPT_ISRG_X1_ROOT_PK_SHA256}")
-                    .add(hostname, "sha256/${LETS_ENCRYPT_R3_INTERM_PK_SHA256}")
+                    .add(hostname, "sha256/${TESTSERVER_ROOT_PK_SHA256}")
+                    .add(hostname, "sha256/${TESTSERVER_INTERMEDIATE_PK_SHA256}")
                     .build()
 
                 val client = OkHttpClient.Builder()
                     .certificatePinner(certificatePinner)
                     .build()
                 val request = Request.Builder()
-                    .url("https://ecc384.badssl.com")
+                    .url("https://$CODE_PINNED_HOST")
                     .build()
 
                 client.newCall(request).execute().use { response ->
@@ -367,7 +393,7 @@ class MainActivity : AppCompatActivity() {
         try {
             // Create an HTTP client that only trusts our specific certificate:
             val cf = CertificateFactory.getInstance("X.509")
-            val caStream = BufferedInputStream(resources.openRawResource(R.raw.lets_encrypt_isrg_root))
+            val caStream = BufferedInputStream(resources.openRawResource(R.raw.testserver_root))
             val ca = cf.generateCertificate(caStream)
             caStream.close()
 
@@ -391,7 +417,7 @@ class MainActivity : AppCompatActivity() {
             // Make a request using that client:
             val stringRequest = StringRequest(
                 com.android.volley.Request.Method.GET,
-                "https://ecc384.badssl.com",
+                "https://$CODE_PINNED_HOST",
                 { _ ->
                     println("Volley success")
                     this@MainActivity.onSuccess(R.id.volley_pinned)
@@ -413,10 +439,10 @@ class MainActivity : AppCompatActivity() {
         GlobalScope.launch(Dispatchers.IO) {
             onStart(R.id.trustkit_pinned)
             try {
-                val mURL = URL("https://sha256.badssl.com")
+                val mURL = URL("https://$TRUSTKIT_PINNED_HOST")
                 with(mURL.openConnection() as HttpsURLConnection) {
                     this.sslSocketFactory = TrustKit.getInstance().getSSLSocketFactory(
-                            "sha256.badssl.com"
+                            TRUSTKIT_PINNED_HOST
                     )
                     println("URL: ${this.url}")
                     println("Response Code: ${this.responseCode}")
@@ -435,7 +461,7 @@ class MainActivity : AppCompatActivity() {
             onStart(R.id.appmattus_ct_checked)
 
             try {
-                val mURL = URL("https://sha256.badssl.com")
+                val mURL = URL("https://$CT_HOSTNAME_VERIFIER_HOST")
                 with(mURL.openConnection() as HttpsURLConnection) {
                     this.hostnameVerifier = certificateTransparencyHostnameVerifier(this.hostnameVerifier)
                     println("URL: ${this.url}")
@@ -459,7 +485,7 @@ class MainActivity : AppCompatActivity() {
                     addNetworkInterceptor(appmattusInterceptor)
                 }.build()
                 val request = Request.Builder()
-                    .url("https://sha256.badssl.com")
+                    .url("https://$CT_OKHTTP_HOST")
                     .build()
 
                 client.newCall(request).execute().use { response ->
@@ -479,13 +505,15 @@ class MainActivity : AppCompatActivity() {
         GlobalScope.launch(Dispatchers.IO) {
             onStart(R.id.appmattus_raw_ct_checked)
 
+            // The bundle holds both the self-signed root and its cross-signed copy, as servers
+            // may send either, and path building needs whichever one terminates the chain:
             val cf = CertificateFactory.getInstance("X.509")
-            val caStream = BufferedInputStream(resources.openRawResource(R.raw.lets_encrypt_isrg_root))
-            val caCertificate = cf.generateCertificate(caStream)
+            val caStream = BufferedInputStream(resources.openRawResource(R.raw.gts_root_r1))
+            val caCertificates = cf.generateCertificates(caStream)
 
             val keyStore = KeyStore.getInstance(KeyStore.getDefaultType())
             keyStore.load(null)
-            keyStore.setCertificateEntry("ca", caCertificate)
+            caCertificates.forEachIndexed { i, ca -> keyStore.setCertificateEntry("ca$i", ca) }
 
             val trustManagerFactory = TrustManagerFactory
                 .getInstance(TrustManagerFactory.getDefaultAlgorithm())
@@ -502,7 +530,7 @@ class MainActivity : AppCompatActivity() {
                 val context = SSLContext.getInstance("TLS")
                 context.init(null, ctWrappedTrustManagers, null)
 
-                val mURL = URL("https://ecc384.badssl.com")
+                val mURL = URL("https://$CT_TRUST_MANAGER_HOST")
                 with(mURL.openConnection() as HttpsURLConnection) {
                     this.sslSocketFactory = context.socketFactory
 
@@ -554,7 +582,7 @@ class MainActivity : AppCompatActivity() {
                 onSuccess(R.id.appmattus_webview_ct_checked)
             }
         }
-        webView.loadUrl("https://rsa4096.badssl.com")
+        webView.loadUrl("https://$CT_WEBVIEW_HOST")
     }
 
     fun sendFlutterRequest(view: View) {
@@ -563,7 +591,7 @@ class MainActivity : AppCompatActivity() {
         val channel = MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, "tech.httptoolkit.pinning_demo.flutter_channel")
 
         println("Calling Dart method from Kotlin...")
-        channel.invokeMethod("sendRequest", "https://ecc384.badssl.com/", object : MethodChannel.Result {
+        channel.invokeMethod("sendRequest", "https://$UNGUARDED_HOST/", object : MethodChannel.Result {
             override fun success(result: Any?) {
                 println("Success from Dart: $result")
                 onSuccess(R.id.flutter_request)
@@ -600,13 +628,13 @@ class MainActivity : AppCompatActivity() {
                 val context = SSLContext.getInstance("TLS")
                 context.init(null, trustManager, null)
 
-                val socket = context.socketFactory.createSocket("ecc384.badssl.com", 443) as SSLSocket
+                val socket = context.socketFactory.createSocket(CODE_PINNED_HOST, 443) as SSLSocket
 
                 val certs = socket.session.peerCertificates
 
                 if (!certs.any { cert ->
-                        doesCertMatchPin(LETS_ENCRYPT_ISRG_X1_ROOT_PK_SHA256, cert) ||
-                        doesCertMatchPin(LETS_ENCRYPT_R3_INTERM_PK_SHA256, cert)
+                        doesCertMatchPin(TESTSERVER_ROOT_PK_SHA256, cert) ||
+                        doesCertMatchPin(TESTSERVER_INTERMEDIATE_PK_SHA256, cert)
                 }) {
                     socket.close() // Close the socket immediately without sending a request
                     throw Error("Unrecognized cert hash.")
@@ -615,7 +643,7 @@ class MainActivity : AppCompatActivity() {
                 // Send a real request, just to make it clear that we trust the connection:
                 val pw = PrintWriter(socket.outputStream)
                 pw.println("GET / HTTP/1.1")
-                pw.println("Host: ecc384.badssl.com")
+                pw.println("Host: $CODE_PINNED_HOST")
                 pw.println("")
                 pw.flush()
 

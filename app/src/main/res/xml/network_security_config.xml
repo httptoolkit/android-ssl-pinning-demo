@@ -1,37 +1,72 @@
 <?xml version="1.0" encoding="utf-8"?>
+
+<!--
+    Each button targets its own hostname, so that whatever blocks (or fails to block) a request is
+    unambiguously the feature that button demonstrates, rather than another button's config or the
+    platform defaults leaking across. Only the hostnames below have any config at all.
+
+    The "untrusted root" hosts below are issued by testserver.host's own CA, trusted here via
+    @raw/testserver_root. The Certificate Transparency buttons instead use publicly trusted
+    (Google Trust Services) hosts, as CT only exists for public CAs.
+-->
 <network-security-config>
 
-    <!-- We use amiusing.httptoolkit.tech for unpinned requests -->
+    <!-- Unpinned, plain HTTP & Flutter requests. No pinning, no custom anchors: the baseline. -->
     <domain-config cleartextTrafficPermitted="true">
-    <domain includeSubdomains="false">amiusing.httptoolkit.tech</domain>
+        <domain includeSubdomains="false">testserver.host</domain>
     </domain-config>
-    <!-- We use ecc384.badssl.com for manual pinning, defined in code -->
 
-    <!-- We use sha256.badssl.com for normal config-defined pinning: -->
+    <!-- Android's own config-defined pinning. Nothing else uses this host. -->
     <domain-config>
-        <domain includeSubdomains="false">sha256.badssl.com</domain>
+        <domain includeSubdomains="false">rsa2048--untrusted-root.testserver.host</domain>
         <pin-set>
-            <pin digest="SHA-256">C5+lpZ7tcVwmwQIMcRtPbsQtWLABXhQzejna0wHFr8M=</pin>
+            <pin digest="SHA-256">SOCynZ/Y0dEFXgzk6JBT75LF3JhnwWGNJ4SMOmU8CIY=</pin>
 
             <!-- TrustKit rejects the config if we use only one pin, so we add a dud: -->
             <pin digest="SHA-256">ABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFA</pin>
         </pin-set>
         <trust-anchors>
-            <certificates src="@raw/lets_encrypt_isrg_root" />
+            <certificates src="@raw/testserver_root" />
+        </trust-anchors>
+    </domain-config>
+
+    <!-- TrustKit's reimplementation of the same idea, on its own host to keep the two separable. -->
+    <domain-config>
+        <domain includeSubdomains="false">rsa4096--untrusted-root.testserver.host</domain>
+        <pin-set>
+            <pin digest="SHA-256">SOCynZ/Y0dEFXgzk6JBT75LF3JhnwWGNJ4SMOmU8CIY=</pin>
+            <pin digest="SHA-256">ABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFA</pin>
+        </pin-set>
+        <trust-anchors>
+            <certificates src="@raw/testserver_root" />
         </trust-anchors>
         <trustkit-config enforcePinning="true">
             <report-uri>http://trustkit-report-url.test</report-uri>
         </trustkit-config>
     </domain-config>
 
-    <!-- We use rsa4096.badssl.com for Appmattus's global config-defined pinning: -->
+    <!--
+        Pinning done manually in code (context/OkHttp/Volley/raw socket). Deliberately no pin-set:
+        the CA is trusted so the connection can succeed on its own, and so anything that blocks it
+        must be the app's own code rather than the platform.
+    -->
     <domain-config>
-        <domain includeSubdomains="false">rsa4096.badssl.com</domain>
-        <pin-set>
-            <pin digest="SHA-256">C5+lpZ7tcVwmwQIMcRtPbsQtWLABXhQzejna0wHFr8M=</pin>
-        </pin-set>
+        <domain includeSubdomains="false">rsa8192--untrusted-root.testserver.host</domain>
         <trust-anchors>
-            <certificates src="@raw/lets_encrypt_isrg_root" />
+            <certificates src="@raw/testserver_root" />
         </trust-anchors>
     </domain-config>
+
+    <!-- Appmattus's global CT provider, which for WebView needs the anchors configured here too. -->
+    <domain-config>
+        <domain includeSubdomains="false">tls-v1-3--tls-v1-2.testserver.host</domain>
+        <pin-set>
+            <pin digest="SHA-256">hxqRlPTu1bMS/0DITB1SSu0vd4u/8l8TjPgfaAp63Gc=</pin>
+            <pin digest="SHA-256">ABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFA</pin>
+        </pin-set>
+        <trust-anchors>
+            <certificates src="@raw/gts_root_r1" />
+        </trust-anchors>
+    </domain-config>
+
 </network-security-config>
