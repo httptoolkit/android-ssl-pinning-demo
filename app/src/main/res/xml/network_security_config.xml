@@ -67,4 +67,14 @@
         </trust-anchors>
     </domain-config>
 
+    <!--
+        Android's own CT enforcement. No trust-anchors here on purpose: platform CT is skipped
+        whenever a domain uses inline or user anchors, so adding any would silently disable the
+        very thing this is testing.
+    -->
+    <domain-config>
+        <domain includeSubdomains="false">tls-v1-3--tls-v1-2.testserver.host</domain>
+        <certificateTransparency enabled="true" />
+    </domain-config>
+
 </network-security-config>

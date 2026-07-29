@@ -71,6 +71,10 @@ const val CT_HOSTNAME_VERIFIER_HOST = "tls-v1-2--tls-v1-3.testserver.host"
 const val CT_OKHTTP_HOST = "http2--http1.testserver.host"
 const val CT_TRUST_MANAGER_HOST = "http1--http2.testserver.host"
 
+// Android's own CT enforcement, configured in network_security_config.xml. Unavailable before
+// Android 16 (API 36), opt-in there, and on by default from Android 17 (API 37).
+const val NATIVE_CT_HOST = "tls-v1-3--tls-v1-2.testserver.host"
+
 // testserver.host's own CA, which serves its root in the chain, so we can pin either:
 const val TESTSERVER_ROOT_PK_SHA256 = "SOCynZ/Y0dEFXgzk6JBT75LF3JhnwWGNJ4SMOmU8CIY="
 const val TESTSERVER_INTERMEDIATE_PK_SHA256 = "UoKxGKz3meAmeM9JwHt6hfBs6jG0BqwgJ4vuYBiCeG4="
@@ -530,6 +534,27 @@ class MainActivity : AppCompatActivity() {
             } catch (e: Throwable) {
                 println(e)
                 onError(R.id.appmattus_raw_ct_checked, e.toString())
+            }
+        }
+    }
+
+    // Checked by the platform itself, via <certificateTransparency> in the network security
+    // config. No CT code in the app at all - on Android 15 and below this is simply unenforced,
+    // so the button passes without proving anything:
+    fun sendNativeCTRequest(view: View) {
+        GlobalScope.launch(Dispatchers.IO) {
+            onStart(R.id.native_ct)
+            try {
+                val mURL = URL("https://$NATIVE_CT_HOST")
+                with(mURL.openConnection() as HttpsURLConnection) {
+                    println("URL: ${this.url}")
+                    println("Response Code: ${this.responseCode}")
+                }
+
+                onSuccess(R.id.native_ct)
+            } catch (e: Throwable) {
+                println(e)
+                onError(R.id.native_ct, e.toString())
             }
         }
     }

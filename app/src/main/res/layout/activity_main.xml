@@ -107,6 +107,20 @@
                 android:onClick="sendTrustKitPinned"
                 android:text="TrustKit pinned request" />
 
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
+                android:background="@android:color/darker_gray"/>
+
+            <Button
+                android:id="@+id/native_ct"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="sendNativeCTRequest"
+                android:text="Native CT request" />
+
             <Button
                 android:id="@+id/appmattus_ct_checked"
                 android:layout_width="match_parent"
