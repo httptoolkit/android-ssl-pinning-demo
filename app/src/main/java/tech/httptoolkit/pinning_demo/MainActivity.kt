@@ -11,6 +11,9 @@ import android.widget.Toast
 import androidx.annotation.IdRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.BasicNetwork
 import com.android.volley.toolbox.HurlStack
@@ -97,6 +100,18 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        // Deal with SDK 35+ edge to edge layout:
+        val scrollView = findViewById<View>(R.id.root_scroll)
+        ViewCompat.setOnApplyWindowInsetsListener(scrollView) { view, windowInsets ->
+            val bars = windowInsets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
+            )
+            view.updatePadding(
+                left = bars.left, top = bars.top, right = bars.right, bottom = bars.bottom
+            )
+            windowInsets
+        }
 
         TrustKit.initializeWithNetworkSecurityConfiguration(this@MainActivity)
 

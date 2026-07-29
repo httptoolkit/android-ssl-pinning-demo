@@ -15,7 +15,7 @@ android {
     defaultConfig {
         applicationId "tech.httptoolkit.pinning_demo"
         minSdkVersion 24
-        targetSdkVersion 33
+        targetSdkVersion 36
         versionCode 10
         versionName "1.6.0"
 
