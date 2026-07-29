@@ -46,14 +46,18 @@
     </domain-config>
 
     <!--
-        Pinning done manually in code (context/OkHttp/Volley/raw socket). Deliberately no pin-set:
-        the CA is trusted so the connection can succeed on its own, and so anything that blocks it
-        must be the app's own code rather than the platform.
+        Pinning done manually in code (context/OkHttp/Volley/raw socket). Deliberately no pin-set,
+        and system certificates are trusted alongside our own CA, so that the platform will happily
+        complete any connection an interceptor offers. That leaves the app's own pinning code as
+        the only thing that can block these requests, which is the point of these buttons - without
+        the system anchors, an interception CA would be rejected during chain validation before
+        OkHttp's CertificatePinner ever ran.
     -->
     <domain-config>
         <domain includeSubdomains="false">rsa8192--untrusted-root.testserver.host</domain>
         <trust-anchors>
             <certificates src="@raw/testserver_root" />
+            <certificates src="system" />
         </trust-anchors>
     </domain-config>
 
