@@ -71,6 +71,7 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:5.4.0'
     implementation 'com.android.volley:volley:1.2.1'
     implementation 'com.datatheorem.android.trustkit:trustkit:1.1.5'
+    implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.1.0'
     implementation 'androidx.preference:preference-ktx:1.2.1'
     implementation 'com.appmattus.certificatetransparency:certificatetransparency-android:2.8.20'
     implementation 'org.chromium.net:cronet-embedded:143.7445.0'

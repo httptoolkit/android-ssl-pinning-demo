@@ -19,7 +19,6 @@ import com.android.volley.toolbox.StringRequest
 import com.appmattus.certificatetransparency.certificateTransparencyHostnameVerifier
 import com.appmattus.certificatetransparency.certificateTransparencyInterceptor
 import com.appmattus.certificatetransparency.certificateTransparencyTrustManager
-import com.appmattus.certificatetransparency.installCertificateTransparencyProvider
 import com.datatheorem.android.trustkit.TrustKit
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.dart.DartExecutor
@@ -71,7 +70,6 @@ const val CODE_PINNED_HOST = "rsa8192--untrusted-root.testserver.host"
 const val CT_HOSTNAME_VERIFIER_HOST = "tls-v1-2--tls-v1-3.testserver.host"
 const val CT_OKHTTP_HOST = "http2--http1.testserver.host"
 const val CT_TRUST_MANAGER_HOST = "http1--http2.testserver.host"
-const val CT_WEBVIEW_HOST = "tls-v1-3--tls-v1-2.testserver.host"
 
 // testserver.host's own CA, which serves its root in the chain, so we can pin either:
 const val TESTSERVER_ROOT_PK_SHA256 = "SOCynZ/Y0dEFXgzk6JBT75LF3JhnwWGNJ4SMOmU8CIY="
@@ -97,15 +95,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         TrustKit.initializeWithNetworkSecurityConfiguration(this@MainActivity)
-
-        // Appmattus global setup:
-        installCertificateTransparencyProvider {
-            // Match only our single Appmattus test domain, so this global provider can't
-            // silently affect the other buttons:
-            -"testserver.host"
-            -"*.testserver.host"
-            +CT_WEBVIEW_HOST
-        }
 
         // Prepare the flutter engine:
         flutterEngine = FlutterEngine(this)
@@ -543,46 +532,6 @@ class MainActivity : AppCompatActivity() {
                 onError(R.id.appmattus_raw_ct_checked, e.toString())
             }
         }
-    }
-
-    // Pinned by global setup from installCertificateTransparencyProvider
-    // call in onCreate():
-    fun sendAppmattusCTWebView(view: View) {
-        onStart(R.id.appmattus_webview_ct_checked)
-        val webView = createAttachedWebView()
-
-        var connectionFailed = false
-
-        webView.webViewClient = object : WebViewClient() {
-            override fun onReceivedSslError(
-                view: WebView?,
-                handler: SslErrorHandler?,
-                error: SslError?
-            ) {
-                println("Appmattus webview SSL error: " + error.toString())
-                onError(R.id.appmattus_webview_ct_checked, error.toString())
-                connectionFailed = true
-                handler?.cancel()
-            }
-
-            override fun onReceivedError(
-                view: WebView?,
-                request: WebResourceRequest?,
-                error: WebResourceError?
-            ) {
-                println("Appmattus webview error: " + error.toString())
-                onError(R.id.appmattus_webview_ct_checked, error.toString())
-                connectionFailed = true
-            }
-
-            override fun onPageFinished(view: WebView?, url: String?) {
-                if (connectionFailed) return
-
-                println("Appmattus WebView loaded OK")
-                onSuccess(R.id.appmattus_webview_ct_checked)
-            }
-        }
-        webView.loadUrl("https://$CT_WEBVIEW_HOST")
     }
 
     fun sendFlutterRequest(view: View) {

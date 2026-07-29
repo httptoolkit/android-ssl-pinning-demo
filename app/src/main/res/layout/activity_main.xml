@@ -128,13 +128,6 @@
                 android:onClick="sendAppmattusRawCTChecked"
                 android:text="Appmattus+raw TLS CT" />
 
-            <Button
-                android:id="@+id/appmattus_webview_ct_checked"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:onClick="sendAppmattusCTWebView"
-                android:text="Appmattus+WebView CT" />
-
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"

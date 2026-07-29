@@ -16,7 +16,12 @@
         <domain includeSubdomains="false">testserver.host</domain>
     </domain-config>
 
-    <!-- Android's own config-defined pinning. Nothing else uses this host. -->
+    <!--
+        Android's own config-defined pinning. Nothing else uses this host. System certificates are
+        trusted alongside our CA so that an interception certificate validates fine, leaving the
+        pin-set below as the thing that actually rejects it - otherwise this fails during chain
+        validation and never exercises the pinning it exists to demonstrate.
+    -->
     <domain-config>
         <domain includeSubdomains="false">rsa2048--untrusted-root.testserver.host</domain>
         <pin-set>
@@ -27,6 +32,7 @@
         </pin-set>
         <trust-anchors>
             <certificates src="@raw/testserver_root" />
+            <certificates src="system" />
         </trust-anchors>
     </domain-config>
 
@@ -58,18 +64,6 @@
         <trust-anchors>
             <certificates src="@raw/testserver_root" />
             <certificates src="system" />
-        </trust-anchors>
-    </domain-config>
-
-    <!-- Appmattus's global CT provider, which for WebView needs the anchors configured here too. -->
-    <domain-config>
-        <domain includeSubdomains="false">tls-v1-3--tls-v1-2.testserver.host</domain>
-        <pin-set>
-            <pin digest="SHA-256">hxqRlPTu1bMS/0DITB1SSu0vd4u/8l8TjPgfaAp63Gc=</pin>
-            <pin digest="SHA-256">ABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFA</pin>
-        </pin-set>
-        <trust-anchors>
-            <certificates src="@raw/gts_root_r1" />
         </trust-anchors>
     </domain-config>
 
