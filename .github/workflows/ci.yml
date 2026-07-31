@@ -16,6 +16,11 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      # Runner images only preinstall a handful of NDKs, and drop old ones over time. Installing
+      # ours explicitly means that when it ages out we get a download, not a silently unstripped APK:
+      - name: Install the NDK
+        run: sdkmanager --install "ndk;28.2.13676358"
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -29,6 +34,22 @@ jobs:
         run: ./gradlew assembleRelease
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+
+      # Stripping fails silently, so check the built APK rather than trusting the config:
+      - name: Check native debug symbols were stripped
+        run: |
+          python3 - <<'EOF'
+          import glob, sys, zipfile
+
+          apk, = glob.glob('app/build/outputs/apk/release/app-*.apk')
+          lib = 'lib/arm64-v8a/libflutter.so'
+          size = zipfile.ZipFile(apk).getinfo(lib).file_size
+          print(f'{lib}: {size / 1e6:.1f} MB')
+
+          # Stripped it is ~11MB, unstripped ~165MB, so this threshold isn't a close call:
+          if size > 32_000_000:
+              sys.exit(f'{lib} was not stripped - is the NDK from app/build.gradle installed?')
+          EOF
 
       - uses: actions/upload-artifact@v4
         with:

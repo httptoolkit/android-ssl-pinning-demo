@@ -9,8 +9,11 @@ def keyAvailable = !!keyStorePassword
 android {
     compileSdkVersion 36
 
-    // N.b. if this exact NDK version isn't installed, symbols aren't stripped and the APK will be enormous
-    ndkVersion "25.2.9519653"
+    // AGP strips native debug symbols using this NDK, but if it isn't installed it skips stripping
+    // silently rather than failing. Flutter ships libflutter.so unstripped at ~165MB per ABI, so
+    // that quietly turns a 60MB APK into a 490MB one. Keep this matched to the Flutter SDK's own
+    // flutter.ndkVersion, and see the strip check in CI, which catches it if this drifts again.
+    ndkVersion "28.2.13676358"
 
     defaultConfig {
         applicationId "tech.httptoolkit.pinning_demo"
