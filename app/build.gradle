@@ -19,8 +19,8 @@ android {
         applicationId "tech.httptoolkit.pinning_demo"
         minSdkVersion 24
         targetSdkVersion 36
-        versionCode 12
-        versionName "1.7.0"
+        versionCode 13
+        versionName "1.7.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
